@@ -44,10 +44,21 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-char TxDataBuffer[32] =
-{ 0 };
-char RxDataBuffer[32] =
-{ 0 };
+typedef enum{
+	State_Start=0,State_menu,State_serect,State_LED,State_BUTTON,
+};
+char TxDataBuffer[32] ={ 0 };
+char RxDataBuffer[32] ={ 0 };
+char ShowFrequency[32]={ 0 };
+uint16_t State=0;
+uint32_t f_LED=0;
+int frequency=1;
+float T=0;
+uint32_t timestamp=0;
+uint32_t Buttontimestamp=0;
+uint16_t LED=1;
+GPIO_PinState BlueButton[2];
+uint16_t CheckClick=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -104,32 +115,212 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 	while (1)
 	{
+
 		/*Method 1 Polling Mode*/
 
 //		UARTRecieveAndResponsePolling();
 
 		/*Method 2 Interrupt Mode*/
-//		HAL_UART_Receive_IT(&huart2,  (uint8_t*)RxDataBuffer, 32);
+		HAL_UART_Receive_IT(&huart2,  (uint8_t*)RxDataBuffer, 32);
 
 		/*Method 2 W/ 1 Char Received*/
-//		int16_t inputchar = UARTRecieveIT();
-//		if(inputchar!=-1)
-//		{
+		int16_t inputchar = UARTRecieveIT();
+		if(inputchar!=-1)
+		{
+			switch(State)
+			{
+			case State_Start:
+				State=State_menu;
+				break;
+			case State_menu:
+			{
+				char temp[]="******************\r\n*******MENU*******\r\n";
+				HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+			}
+			{
+				char temp[]="Pls press right\r\n";
+				HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+			}
+			{
+				char temp[]="Press 0 : LED Control\r\n";
+				HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+			}
+			{
+				char temp[]="Press 1 : Button Status\r\n";
+				HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+			}
+			{
+				char temp[]="******************\r\n";
+				HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+			}
+				State=State_serect;
+			break;
+			case State_serect:
+				switch(inputchar)
+				{
+					case '0' :
+					{
+						char temp[]="******************\r\n*****LED_MENU*****\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+					{
+						char temp[]="Pls press right\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+					{
+						char temp[]="Press a : Frequency+1\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+					{
+						char temp[]="Press s : Frequency-1\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+					{
+						char temp[]="Press d : LED ON/OFF\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+					{
+						char temp[]="Press x : Back to Menu \r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+					{
+						char temp[]="******************\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
 
-//			sprintf(TxDataBuffer, "ReceivedChar:[%c]\r\n", inputchar);
-//			HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 1000);
-//		}
+						State=State_LED;
+						break;
+					case '1':
+					{
+						char temp[]="Press x : Back to Menu \r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+					{
+						char temp[]="Press BlueButton : Show Button Status\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+
+						State=State_BUTTON;
+						break;
+					default:
+					{
+						char temp[]="Wrong press again\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+				}break;
+			case State_LED:
+				switch(inputchar)
+				{
+					case 'a':
+						//+1
+						frequency+=1;
+						sprintf(ShowFrequency, "Frequency = %d Hz\r\n",frequency);
+						HAL_UART_Transmit(&huart2, (uint8_t*)ShowFrequency, strlen(ShowFrequency),1000);
+						State=State_LED;
+						break;
+					case 's':
+						//-1
+						frequency-=1;
+						sprintf(ShowFrequency, "Frequency = %d Hz\r\n",frequency);
+						HAL_UART_Transmit(&huart2, (uint8_t*)ShowFrequency, strlen(ShowFrequency),1000);
+						State=State_LED;
+						break;
+					case 'd':
+						//On/off
+						if(HAL_GPIO_ReadPin(LD2_GPIO_Port, LD2_Pin) == GPIO_PIN_SET)
+						{
+							LED=0;
+							HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+							{
+								char temp[]="LED OFF\r\n";
+								HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+							}
+							State=State_LED;
+						}
+						else
+						{
+							HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+							{
+								LED=1;
+							char temp[]="LED ON\r\n";
+							HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+							}
+							State=State_LED;
+						}break;
+					case 'x':
+						//back
+						{char temp[]="BACK TO MENU\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);}
+						State=State_menu;
+						break;
+					default:
+					{
+						char temp[]="Wrong press again\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+					State=State_LED;
+
+				}break;
+			case State_BUTTON:
+				CheckClick=1;
+				switch(inputchar){
+				case 'x':
+					{char temp[]="BACK TO MENU\r\n";
+					HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);}
+					CheckClick=0;
+					State=State_menu;
+					break;
+				default:
+					{
+						char temp[]="Wrong Pls press again\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+					}
+					State=State_BUTTON;
+				}break;
+		}
+				if(LED==1){
+				T=frequency*1000;
+				f_LED=T/2;
+				if(HAL_GetTick()-timestamp> f_LED)
+				{
+					timestamp=HAL_GetTick();
+					HAL_GPIO_TogglePin(LD2_GPIO_Port,LD2_Pin);
+				}
+				}
+
+			if(State==State_BUTTON){
+				if(HAL_GetTick()-Buttontimestamp>=100){
+					Buttontimestamp=HAL_GetTick();
+					BlueButton[0]=HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+					if(BlueButton[1]==GPIO_PIN_SET&&BlueButton[0]==GPIO_PIN_RESET)
+					{
+						{
+						char temp[]="If Button press\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+						}
+						CheckClick=1;
+					}
+					if(BlueButton[1]==GPIO_PIN_RESET&&BlueButton[0]==GPIO_PIN_SET)
+					{
+						{
+						char temp[]=" unpress\r\n";
+						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+						}
+					}
+					BlueButton[1]=BlueButton[0];
+
+				}
+			}
 
 
 
-		/*This section just simmulate Work Load*/
-		HAL_Delay(100);
-		HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	}
+
   /* USER CODE END 3 */
+}
+	}
 }
 
 /**
@@ -243,6 +434,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
 void UARTRecieveAndResponsePolling()
 {
 	char Recieve[32]={0};
