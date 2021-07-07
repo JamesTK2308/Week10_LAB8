@@ -277,40 +277,9 @@ int main(void)
 					}
 					State=State_BUTTON;
 				}break;
+
 		}
-				if(LED==1){
-				T=frequency*1000;
-				f_LED=T/2;
-				if(HAL_GetTick()-timestamp> f_LED)
-				{
-					timestamp=HAL_GetTick();
-					HAL_GPIO_TogglePin(LD2_GPIO_Port,LD2_Pin);
-				}
-				}
 
-			if(State==State_BUTTON){
-				if(HAL_GetTick()-Buttontimestamp>=100){
-					Buttontimestamp=HAL_GetTick();
-					BlueButton[0]=HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
-					if(BlueButton[1]==GPIO_PIN_SET&&BlueButton[0]==GPIO_PIN_RESET)
-					{
-						{
-						char temp[]="If Button press\r\n";
-						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
-						}
-						CheckClick=1;
-					}
-					if(BlueButton[1]==GPIO_PIN_RESET&&BlueButton[0]==GPIO_PIN_SET)
-					{
-						{
-						char temp[]=" unpress\r\n";
-						HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
-						}
-					}
-					BlueButton[1]=BlueButton[0];
-
-				}
-			}
 
 
 
@@ -320,6 +289,40 @@ int main(void)
 
   /* USER CODE END 3 */
 }
+	if(State_LED){
+	T=frequency*1000;
+	f_LED=T/2;
+	if(HAL_GetTick()-timestamp> f_LED)
+	{
+		timestamp=HAL_GetTick();
+		HAL_GPIO_TogglePin(LD2_GPIO_Port,LD2_Pin);
+	}
+	}
+
+if(State==State_BUTTON){
+	if(HAL_GetTick()-Buttontimestamp>=100){
+		Buttontimestamp=HAL_GetTick();
+		BlueButton[0]=HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+		if(BlueButton[1]==GPIO_PIN_SET&&BlueButton[0]==GPIO_PIN_RESET)
+		{
+			{
+			char temp[]="If Button press\r\n";
+			HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+			}
+			CheckClick=1;
+		}
+		if(BlueButton[1]==GPIO_PIN_RESET&&BlueButton[0]==GPIO_PIN_SET)
+		{
+			{
+			char temp[]=" unpress\r\n";
+			HAL_UART_Transmit(&huart2, (uint8_t*)temp, strlen(temp),10);
+			}
+		}
+		BlueButton[1]=BlueButton[0];
+
+	}
+}
+
 	}
 }
 
