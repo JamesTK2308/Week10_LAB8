@@ -290,6 +290,7 @@ int main(void)
   /* USER CODE END 3 */
 }
 	if(State_LED){
+	if(LED=1){
 	T=frequency*1000;
 	f_LED=T/2;
 	if(HAL_GetTick()-timestamp> f_LED)
@@ -298,7 +299,7 @@ int main(void)
 		HAL_GPIO_TogglePin(LD2_GPIO_Port,LD2_Pin);
 	}
 	}
-
+	}
 if(State==State_BUTTON){
 	if(HAL_GetTick()-Buttontimestamp>=100){
 		Buttontimestamp=HAL_GetTick();
@@ -311,6 +312,7 @@ if(State==State_BUTTON){
 			}
 			CheckClick=1;
 		}
+		if(CheckClick)
 		if(BlueButton[1]==GPIO_PIN_RESET&&BlueButton[0]==GPIO_PIN_SET)
 		{
 			{
@@ -438,16 +440,16 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void UARTRecieveAndResponsePolling()
-{
-	char Recieve[32]={0};
-
-	HAL_UART_Receive(&huart2, (uint8_t*)Recieve, 32, 1000);
-
-	sprintf(TxDataBuffer, "Received:[%s]\r\n", Recieve);
-	HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 1000);
-
-}
+//void UARTRecieveAndResponsePolling()
+//{
+//	char Recieve[32]={0};
+//
+//	HAL_UART_Receive(&huart2, (uint8_t*)Recieve, 32, 1000);
+//
+//	sprintf(TxDataBuffer, "Received:[%s]\r\n", Recieve);
+//	HAL_UART_Transmit(&huart2, (uint8_t*)TxDataBuffer, strlen(TxDataBuffer), 1000);
+//
+//}
 
 
 int16_t UARTRecieveIT()
